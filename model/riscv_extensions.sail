@@ -116,3 +116,6 @@ enum clause extension = Ext_Svpbmt
 
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
+
+// Vector Dot-product
+enum clause extension = Ext_Zqvdotq

@@ -46,6 +46,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_vext_fp_vm.sail"
                 "riscv_insts_vext_red.sail"
                 "riscv_insts_vext_fp_red.sail"
+                "riscv_insts_vext_vqdotq.sail"
             )
 
             set(sail_default_inst

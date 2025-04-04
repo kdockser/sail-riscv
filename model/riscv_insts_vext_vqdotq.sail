@@ -10,8 +10,8 @@
 /* This file implements the vector Dot-Product Extension: Zvqdotq                  */
 /*********************************************************************************/
 
-/* ******************************* OPFVV (VVTYPE) ******************************** */
-union clause ast = FVVTYPE : (fvvfunct6, bits(1), vregidx, vregidx, vregidx)
+/* ******************************* OPMVV (VVTYPE) ******************************** */
+union clause ast = MVVTYPE : (mvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
 mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
   FVV_VQDOT       <-> 0b101100,
@@ -19,8 +19,9 @@ mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
   FVV_VQDOTSU     <-> 0b101010
 }
 
-mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> encdec_vvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -38,9 +39,7 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW; // 32
 
   let vm_val  : bits('n)            = read_vmask(num_elem, vm, zvreg);
-  // let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-  // let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-  // let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -66,7 +65,7 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       }
 
       let res : bits(SEW) = a0 * b0 + a1 * b1 + a2 * b2 + a3 * b3 + acc;
-      set_velem(result, i, res);
+      result[i] = res;
     }
   }
 
@@ -75,28 +74,29 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-  mapping fvvtype_mnemonic : fvvfunct6 <-> string = {
+  mapping fvvtype_mnemonic : mvvfunct6 <-> string = {
     FVV_VQDOT       <-> "vqdot.vv",
     FVV_VQDOTU      <-> "vqdotu.vv",
     FVV_VQDOTSU     <-> "vqdotsu.vv"
    }
 
-mapping clause assembly = FVVTYPE(funct6, vm, vs2, vs1, vd)
-  <-> fvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
+mapping clause assembly = MVVTYPE(funct6, vm, vs2, vs1, vd)
+  <-> mvvtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ vreg_name(vs1) ^ maybe_vmask(vm)
 
-/* ******************************* OPIVX (VXTYPE) ******************************** */
+/* ******************************* OPMVX (VXTYPE) ******************************** */
+union clause ast = MVXTYPE : (mvxfunct6, bits(1), vregidx, regidx, vregidx)
 
-union clause ast = FVVTYPE : (fvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
-mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
+mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
   FVX_VQDOT       <-> 0b101100,
   FVX_VQDOTU      <-> 0b101000,
   FVX_VQDOTSU     <-> 0b101010,
   FVX_VQDOTUS     <-> 0b101110
 }
 
-mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd)
+  <-> encdec_mvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
@@ -114,9 +114,7 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let 'm = SEW; // 32
 
   let vm_val  : bits('n)            = read_vmask(num_elem, vm, zvreg);
-//  let vs1_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs1);
-//  let vs2_val : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vs2);
-//  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
+  let vd_val  : vector('n, bits('m)) = read_vreg(num_elem, SEW, LMUL_pow, vd);
 
   let (initial_result, mask) = init_masked_result(num_elem, SEW, LMUL_pow, vd_val, vm_val);
   var result = initial_result;
@@ -124,11 +122,8 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let {a0 @ a1 @ a2 @ a3} : bits(4 * 8) = get_velem(vs2, SEW, i);
-//      let {b0 @ b1 @ b2 @ b3} : bits(4 * 8) = get_velem(vs1, SEW, i);
-// Need to get lowest byte of X(RS1) and duplicate 4 Times
-//
-// You are here <<<<<<<<<
-//
+      let {b0 @ b1 @ b2 @ b3} : bits(4 * 8) = replicate(get_scalar(rs1, 8), 4);
+
       let acc : bits(SEW) = get_velem(vd_val, i);
 
       // Conditionally sign extend based on the instruction type
@@ -146,7 +141,7 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       }
 
       let res : bits(SEW) = a0 * b0 + a1 * b1 + a2 * b2 + a3 * b3 + acc;
-      set_velem(result, i, res);
+      result[i] = res;
     }
   }
 
@@ -155,15 +150,12 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-
-mapping clause encdec = FVVTYPE(funct6, vm, vs2, vs1, vd)                                                       if extensionEnabled(Ext_V)
-  <-> encdec_fvvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111 if extensionEnabled(Ext_V)
-  mapping fvxtype_mnemonic : fvvfunct6 <-> string = {
-    FVX_VQDOT       <-> "vqdot.vx",
-    FVX_VQDOTU      <-> "vqdotu.vx",
-    FVX_VQDOTSU     <-> "vqdotsu.vx",
-    FVX_VQDOTUS     <-> "vqdotus.vx"
+mapping mvxtype_mnemonic : mvxfunct6 <-> string = {
+    MVX_VQDOT       <-> "vqdot.vx",
+    MVX_VQDOTU      <-> "vqdotu.vx",
+    MVX_VQDOTSU     <-> "vqdotsu.vx",
+    MVX_VQDOTUS     <-> "vqdotus.vx"
    }
 
-   mapping clause assembly = VXTYPE(funct6, vm, vs2, rs1, vd)
-  <-> vxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)
+mapping clause assembly = MVXTYPE(funct6, vm, vs2, rs1, vd)
+  <-> mvxtype_mnemonic(funct6) ^ spc() ^ vreg_name(vd) ^ sep() ^ vreg_name(vs2) ^ sep() ^ reg_name(rs1) ^ maybe_vmask(vm)

@@ -13,17 +13,17 @@
 /* ******************************* OPMVV (VVTYPE) ******************************** */
 union clause ast = MVVTYPE : (mvvfunct6, bits(1), vregidx, vregidx, vregidx)
 
-mapping encdec_fvvfunct6 : fvvfunct6 <-> bits(6) = {
-  FVV_VQDOT       <-> 0b101100,
-  FVV_VQDOTU      <-> 0b101000,
-  FVV_VQDOTSU     <-> 0b101010
+mapping encdec_mvvfunct6 : mvvfunct6 <-> bits(6) = {
+  MVV_VQDOT       <-> 0b101100,
+  MVV_VQDOTU      <-> 0b101000,
+  MVV_VQDOTSU     <-> 0b101010
 }
 
 mapping clause encdec = VVTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_vvfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b000 @ encdec_vreg(vd) @ 0b1010111
   when extensionEnabled(Ext_V)
 
-function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute(MVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -51,13 +51,13 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       let acc : bits(SEW) = get_velem(vd, SEW, i);
 
       // Conditionally sign extend based on the instruction type
-      if funct6 == FVV_VQDOT or funct6 == FVV_VQDOTSU then {
+      if funct6 == MVV_VQDOT or funct6 == MVV_VQDOTSU then {
         a0 = sign_extend(a0);
         a1 = sign_extend(a1);
         a2 = sign_extend(a2);
         a3 = sign_extend(a3);
       }
-      if funct6 == FVV_VQDOT or funct6 == FVV_VQDOTUS then {
+      if funct6 == MVV_VQDOT or funct6 == MVV_VQDOTUS then {
         b0 = sign_extend(b0);
         b1 = sign_extend(b1);
         b2 = sign_extend(b2);
@@ -74,10 +74,10 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
   RETIRE_SUCCESS
 }
 
-  mapping fvvtype_mnemonic : mvvfunct6 <-> string = {
-    FVV_VQDOT       <-> "vqdot.vv",
-    FVV_VQDOTU      <-> "vqdotu.vv",
-    FVV_VQDOTSU     <-> "vqdotsu.vv"
+  mapping mvvtype_mnemonic : mvvfunct6 <-> string = {
+    MVV_VQDOT       <-> "vqdot.vv",
+    MVV_VQDOTU      <-> "vqdotu.vv",
+    MVV_VQDOTSU     <-> "vqdotsu.vv"
    }
 
 mapping clause assembly = MVVTYPE(funct6, vm, vs2, vs1, vd)
@@ -88,17 +88,17 @@ union clause ast = MVXTYPE : (mvxfunct6, bits(1), vregidx, regidx, vregidx)
 
 
 mapping encdec_mvxfunct6 : mvxfunct6 <-> bits(6) = {
-  FVX_VQDOT       <-> 0b101100,
-  FVX_VQDOTU      <-> 0b101000,
-  FVX_VQDOTSU     <-> 0b101010,
-  FVX_VQDOTUS     <-> 0b101110
+  MVX_VQDOT       <-> 0b101100,
+  MVX_VQDOTU      <-> 0b101000,
+  MVX_VQDOTSU     <-> 0b101010,
+  MVX_VQDOTUS     <-> 0b101110
 }
 
 mapping clause encdec = MVXTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_mvxfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_reg(rs1) @ 0b110 @ encdec_vreg(vd) @ 0b1010111
   when extensionEnabled(Ext_V)
 
-function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
+function clause execute(MVXTYPE(funct6, vm, vs2, vs1, vd)) = {
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
@@ -127,13 +127,13 @@ function clause execute(FVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       let acc : bits(SEW) = get_velem(vd_val, i);
 
       // Conditionally sign extend based on the instruction type
-      if funct6 == FVV_VQDOT or funct6 == FVV_VQDOTSU then {
+      if funct6 == MVX_VQDOT or funct6 == MVX_VQDOTSU then {
         a0 = sign_extend(a0);
         a1 = sign_extend(a1);
         a2 = sign_extend(a2);
         a3 = sign_extend(a3);
       }
-      if funct6 == FVV_VQDOT or funct6 == FVV_VQDOTUS then {
+      if funct6 == MVX_VQDOT or funct6 == MVX_VQDOTUS then {
         b0 = sign_extend(b0);
         b1 = sign_extend(b1);
         b2 = sign_extend(b2);
